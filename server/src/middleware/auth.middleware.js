@@ -1,98 +1,39 @@
-import bcrypt from "bcryptjs";
-import User from "../models/user.model.js";
+import jwt from "jsonwebtoken";
 
-// 🔐 LOGIN
-export const login = async (req, res) => {
+// 🔐 PROTECT ROUTE
+export const protect = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const authHeader = req.headers.authorization;
 
-    const user = await User.findOne({ email });
+    const token =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : null;
 
-    if (!user) {
-      return res.json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // ✅ bcrypt compare
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Login successful",
-      user,
-    });
-  } catch (err) {
-    res.json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-// 🔁 RESET PASSWORD
-export const resetPassword = async (req, res) => {
-  try {
-    const { email, newPassword } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
-
-    res.json({
-      success: true,
-      message: "Password updated successfully",
-    });
-  } catch (err) {
-    res.json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-// 👤 CURRENT USER (🔥 FINAL FIX)
-export const me = async (req, res) => {
-  try {
-    if (!req.admin) {
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized",
+        message: "Not authorized, no token",
       });
     }
 
-    res.json({
-      success: true,
-      user: req.admin, // ✅ FIXED
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 👉 IMPORTANT: match with controller
+    req.admin = { id: decoded.id };
+
+    next();
   } catch (err) {
-    res.status(500).json({
+    res.status(401).json({
       success: false,
-      message: err.message,
+      message: "Invalid token",
     });
   }
 };
 
-// 🚪 LOGOUT
-export const logout = async (req, res) => {
-  res.json({
-    success: true,
-    message: "Logged out",
-  });
+// 🔐 AUTHORIZE (optional)
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    next();
+  };
 };
