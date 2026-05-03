@@ -1,52 +1,48 @@
 @echo off
-title FINAL FIX + DEPLOY
+title FULL PROJECT AUTO DEPLOY
 
-echo =====================================
-echo 🔧 FIXING API ROUTE (routes/index.js)
-echo =====================================
+echo =========================================
+echo 🚀 FEES MANAGEMENT FULL DEPLOY START
+echo =========================================
 
 cd /d %~dp0
 
-:: Create routes folder if not exist
-if not exist server\src\routes mkdir server\src\routes
-
-:: Create/overwrite index.js
-(
-echo import express from "express";
-echo const router = express.Router();
 echo.
-echo // ✅ API ROOT FIX
-echo router.get("/", (req, res) =^> {
-echo   res.send("API is working 🚀");
-echo });
-echo.
-echo export default router;
-) > server\src\routes\index.js
+echo 📦 Step 1: Installing client dependencies...
+cd client
+call npm install
 
 echo.
-echo =====================================
-echo ✅ API ROUTE FIXED
-echo =====================================
+echo 🔨 Step 2: Building frontend...
+call npm run build
+
+cd ..
 
 echo.
-echo 🚀 PUSHING TO GITHUB...
-
+echo 📂 Step 3: Adding files to Git...
 git add .
-git commit -m "final api fix"
+
+echo.
+echo 📝 Step 4: Commit...
+git commit -m "full deploy update"
+
+echo.
+echo 🚀 Step 5: Push to GitHub...
 git push
 
 echo.
-echo =====================================
-echo ✅ DONE
-echo =====================================
+echo =========================================
+echo ✅ ALL DONE
+echo =========================================
 
 echo.
-echo 👉 Render me jao:
-echo 👉 Manual Deploy -^> Clear build cache ^& deploy
+echo ⚠️ FINAL STEP:
+echo 👉 Render Dashboard open karo
+echo 👉 Manual Deploy -> Clear build cache ^& deploy
 echo.
 
-echo 🌐 TEST:
-echo https://fees-management-system-i8sj.onrender.com/api
+echo 🌐 TEST YOUR APP:
+echo https://fees-management-system-i8sj.onrender.com
 echo.
 
 pause
