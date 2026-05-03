@@ -2,16 +2,12 @@ import { Router } from "express";
 import {
   login,
   logout,
-  me,
-  registerAdmin,
+  me
 } from "../controllers/auth.controller.js";
 
-import { protect, authorize } from "../middleware/auth.middleware.js";
+import { protect } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
-import {
-  loginSchema,
-  registerSchema,
-} from "../validators/auth.validator.js";
+import { loginSchema } from "../validators/auth.validator.js";
 
 const router = Router();
 
@@ -23,14 +19,5 @@ router.post("/logout", logout);
 
 // CURRENT USER
 router.get("/me", protect, me);
-
-// REGISTER ADMIN
-router.post(
-  "/admins",
-  protect,
-  authorize("owner"),
-  validate(registerSchema),
-  registerAdmin
-);
 
 export default router;
