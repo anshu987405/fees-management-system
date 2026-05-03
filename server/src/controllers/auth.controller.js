@@ -1,43 +1,67 @@
-import { Admin } from "../models/Admin.js";
-import { ApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { cookieOptions, signToken } from "../services/token.service.js";
+import bcrypt from "bcryptjs";
+import User from "../models/user.model.js";
 
-function adminResponse(admin) {
-  return {
-    id: admin._id,
-    name: admin.name,
-    email: admin.email,
-    role: admin.role,
-    avatarUrl: admin.avatarUrl
-  };
-}
+// 🔐 LOGIN
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-export const login = asyncHandler(async (req, res) => {
-  const admin = await Admin.findOne({ email: req.body.email }).select("+password");
-  if (!admin || !(await admin.comparePassword(req.body.password))) {
-    throw new ApiError(401, "Invalid email or password");
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    // ✅ bcrypt compare
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      user,
+    });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
   }
+};
 
-  admin.lastLoginAt = new Date();
-  await admin.save();
+// 🔁 RESET PASSWORD
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
 
-  const token = signToken(admin);
-  res.cookie("token", token, cookieOptions()).json({ success: true, token, admin: adminResponse(admin) });
-});
+    const user = await User.findOne({ email });
 
-export const logout = asyncHandler(async (req, res) => {
-  res.clearCookie("token", cookieOptions()).json({ success: true });
-});
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
 
-export const me = asyncHandler(async (req, res) => {
-  res.json({ success: true, admin: adminResponse(req.admin) });
-});
+    // ✅ नया hash बनाओ
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
 
-export const registerAdmin = asyncHandler(async (req, res) => {
-  const exists = await Admin.exists({ email: req.body.email });
-  if (exists) throw new ApiError(409, "Admin email already exists");
+    res.json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+};
 
-  const admin = await Admin.create(req.body);
-  res.status(201).json({ success: true, admin: adminResponse(admin) });
-});
+// 👤 CURRENT USER
+export const me = async (req, res) => {
+  res.json({ success: true, user: req.user });
+};
+
+// 🚪 LOGOUT
+export const logout = async (req, res) => {
+  res.json({ success: true, message: "Logged out" });
+};

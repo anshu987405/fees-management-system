@@ -1,6 +1,11 @@
 node_modules/
-dist/
 .env
-.npm-cache/
+.env.*
+dist/
+build/
 uploads/
+*.log
 npm-debug.log*
+.DS_Store
+.vscode/
+.idea/

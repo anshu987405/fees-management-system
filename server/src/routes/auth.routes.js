@@ -1,48 +1,86 @@
-import { Router } from "express";
-import {
-  login,
-  logout,
-  me,
-  registerAdmin,
-} from "../controllers/auth.controller.js";
+import bcrypt from "bcryptjs";
+import User from "../models/user.model.js";
 
-import { protect, authorize } from "../middleware/auth.middleware.js";
-import { validate } from "../middleware/validate.middleware.js";
-import {
-  loginSchema,
-  registerSchema,
-} from "../validators/auth.validator.js";
+// 🔐 LOGIN
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-const router = Router();
+    // user find
+    const user = await User.findOne({ email });
 
-/**
- * @route   POST /api/auth/login
- * @desc    Login user
- */
-router.post("/login", validate(loginSchema), login);
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-/**
- * @route   POST /api/auth/logout
- * @desc    Logout user
- */
-router.post("/logout", logout);
+    // ✅ bcrypt compare (MOST IMPORTANT)
+    const isMatch = await bcrypt.compare(password, user.password);
 
-/**
- * @route   GET /api/auth/me
- * @desc    Get current logged-in user
- */
-router.get("/me", protect, me);
+    if (!isMatch) {
+      return res.json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
 
-/**
- * @route   POST /api/auth/admins
- * @desc    Register new admin (owner only)
- */
-router.post(
-  "/admins",
-  protect,
-  authorize("owner"),
-  validate(registerSchema),
-  registerAdmin
-);
+    res.json({
+      success: true,
+      message: "Login successful",
+      user,
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
-export default router;
+// 👤 CURRENT USER
+export const me = async (req, res) => {
+  res.json({ success: true, user: req.user });
+};
+
+// 🚪 LOGOUT
+export const logout = async (req, res) => {
+  res.json({ success: true, message: "Logged out" });
+};
+
+// 🆕 REGISTER ADMIN (optional)
+export const registerAdmin = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const exist = await User.findOne({ email });
+
+    if (exist) {
+      return res.json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashed,
+      role: "admin",
+    });
+
+    res.json({
+      success: true,
+      message: "Admin created",
+      user,
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

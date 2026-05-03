@@ -1,14 +1,13 @@
 @echo off
-title PUSH CODE TO GITHUB
+title SMART PUSH (IGNORE USELESS FILES)
 
-echo ======================================
-echo 🚀 PUSHING CODE TO GITHUB
-echo ======================================
-
-:: Go to project root (auto detect)
 cd /d %~dp0
 
-:: Check git
+echo ======================================
+echo 🚀 SMART GITHUB PUSH START
+echo ======================================
+
+:: ensure git installed
 git --version >nul 2>&1
 if errorlevel 1 (
     echo ❌ Git installed nahi hai
@@ -16,16 +15,33 @@ if errorlevel 1 (
     exit
 )
 
+:: create/update .gitignore (safe)
+echo Creating .gitignore...
+
+(
+echo node_modules/
+echo .env
+echo .env.*
+echo dist/
+echo build/
+echo uploads/
+echo *.log
+echo npm-debug.log*
+echo .DS_Store
+echo .vscode/
+echo .idea/
+) > .gitignore
+
 echo.
-echo 📂 Adding files...
+echo 📂 Adding files (excluding ignored)...
 git add .
 
 echo.
-echo 📝 Commit message enter karo:
+echo 📝 Enter commit message:
 set /p msg=Message: 
 
 if "%msg%"=="" (
-    set msg=auto update
+    set msg=smart auto push
 )
 
 echo.
@@ -33,12 +49,12 @@ echo 📦 Committing...
 git commit -m "%msg%"
 
 echo.
-echo 🚀 Pushing...
+echo 🚀 Pushing to GitHub...
 git push
 
 echo.
 echo ======================================
-echo ✅ DONE - CODE PUSHED
+echo ✅ DONE - PROJECT PUSHED CLEANLY
 echo ======================================
 
 echo.
