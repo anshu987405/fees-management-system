@@ -10,7 +10,7 @@ export default function Login() {
   const [values, setValues] = useState({ email: "admin@feespro.local", password: "Admin@12345" });
   const [loading, setLoading] = useState(false);
 
-  if (admin) return <Navigate to="/" replace />;
+  if (admin) return <Navigate to="/dashboard" replace />;
 
   async function submit(event) {
     event.preventDefault();
@@ -18,7 +18,7 @@ export default function Login() {
     try {
       await login(values);
       toast.success("Welcome back");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
