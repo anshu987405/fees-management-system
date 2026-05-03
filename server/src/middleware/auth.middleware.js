@@ -1,30 +1,98 @@
-import jwt from "jsonwebtoken";
-import { ApiError } from "../utils/apiError.js";
-import { Admin } from "../models/Admin.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import bcrypt from "bcryptjs";
+import User from "../models/user.model.js";
 
-export const protect = asyncHandler(async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : req.cookies?.token;
+// 🔐 LOGIN
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  if (!token) {
-    throw new ApiError(401, "Authentication required");
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // ✅ bcrypt compare
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      user,
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      message: err.message,
+    });
   }
+};
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  const admin = await Admin.findById(decoded.id).select("-password");
+// 🔁 RESET PASSWORD
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
 
-  if (!admin || !admin.isActive) {
-    throw new ApiError(401, "Invalid or inactive admin account");
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      message: err.message,
+    });
   }
+};
 
-  req.admin = admin;
-  next();
-});
+// 👤 CURRENT USER (🔥 FINAL FIX)
+export const me = async (req, res) => {
+  try {
+    if (!req.admin) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized",
+      });
+    }
 
-export const authorize = (...roles) => (req, res, next) => {
-  if (!roles.includes(req.admin.role)) {
-    throw new ApiError(403, "You do not have permission for this action");
+    res.json({
+      success: true,
+      user: req.admin, // ✅ FIXED
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
-  next();
+};
+
+// 🚪 LOGOUT
+export const logout = async (req, res) => {
+  res.json({
+    success: true,
+    message: "Logged out",
+  });
 };
