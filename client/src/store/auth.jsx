@@ -7,27 +7,37 @@ export function AuthProvider({ children }) {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 FIX 1
   useEffect(() => {
     api.get("/auth/me")
-      .then((res) => setAdmin(res.data.admin))
+      .then((res) => setAdmin(res.data.user)) // ✅ user not admin
       .catch(() => setAdmin(null))
       .finally(() => setLoading(false));
   }, []);
 
+  // 🔥 FIX 2
   async function login(values) {
     const res = await api.post("/auth/login", values);
-    localStorage.setItem("feespro_token", res.data.token);
-    setAdmin(res.data.admin);
-    return res.data.admin;
+
+    if (res.data.success) {
+      setAdmin(res.data.user); // ✅ user not admin
+      return res.data.user;
+    } else {
+      throw new Error(res.data.message);
+    }
   }
 
+  // logout
   async function logout() {
     await api.post("/auth/logout").catch(() => {});
-    localStorage.removeItem("feespro_token");
     setAdmin(null);
   }
 
-  const value = useMemo(() => ({ admin, loading, login, logout }), [admin, loading]);
+  const value = useMemo(
+    () => ({ admin, loading, login, logout }),
+    [admin, loading]
+  );
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
