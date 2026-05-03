@@ -7,17 +7,19 @@ import { Setting } from "./models/Setting.js";
 async function bootstrap() {
   await connectDB();
 
-  const adminCount = await Admin.countDocuments();
-  if (adminCount === 0) {
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@feespro.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "anshu@#8923";
+  const admin = await Admin.findOne({ email: adminEmail });
+  if (!admin) {
     await Admin.create({
-      name: "System Admin",
-      email: "admin@feespro.local",
-      password: "Admin@12345",
+      name: process.env.ADMIN_NAME || "System Admin",
+      email: adminEmail,
+      password: adminPassword,
       role: "owner"
     });
-    console.log("Default admin created: admin@feespro.local / Admin@12345");
+    console.log(`Default admin created: ${adminEmail}`);
   } else {
-    console.log("Admin already exists. No admin records changed.");
+    console.log("Default admin already exists. No admin records changed.");
   }
 
   const settings = await Setting.findOne();

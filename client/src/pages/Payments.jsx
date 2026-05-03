@@ -59,8 +59,8 @@ export default function Payments() {
                       <button className="btn-secondary px-3 py-1.5" onClick={() => sendReceipt(payment._id)} title="Send fee slip on WhatsApp">
                         <Send size={15} /> WhatsApp
                       </button>
-                      {payment.screenshotUrl && (
-                        <a className="btn-secondary px-3 py-1.5" href={`${api.defaults.baseURL.replace("/api", "")}${payment.screenshotUrl}`} target="_blank" rel="noreferrer" title="Open payment screenshot">
+                      {(payment.screenshotDataUrl || payment.screenshotUrl) && (
+                        <a className="btn-secondary px-3 py-1.5" href={payment.screenshotDataUrl || `${api.defaults.baseURL.replace("/api", "")}${payment.screenshotUrl}`} target="_blank" rel="noreferrer" title="Open payment screenshot">
                           <ExternalLink size={15} />
                         </a>
                       )}

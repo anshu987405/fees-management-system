@@ -1,67 +1,44 @@
-import bcrypt from "bcryptjs";
-import User from "../models/user.model.js";
+import { Admin } from "../models/Admin.js";
+import { ApiError } from "../utils/apiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { cookieOptions, signToken } from "../services/token.service.js";
 
-// 🔐 LOGIN
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+function adminResponse(admin) {
+  return {
+    id: admin._id,
+    name: admin.name,
+    email: admin.email,
+    role: admin.role,
+    avatarUrl: admin.avatarUrl
+  };
+}
 
-    const user = await User.findOne({ email });
+export const login = asyncHandler(async (req, res) => {
+  const admin = await Admin.findOne({ email: req.body.email }).select("+password");
 
-    if (!user) {
-      return res.json({ success: false, message: "User not found" });
-    }
-
-    // ✅ bcrypt compare
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Login successful",
-      user,
-    });
-  } catch (err) {
-    res.json({ success: false, message: err.message });
+  if (!admin || !(await admin.comparePassword(req.body.password))) {
+    throw new ApiError(401, "Invalid email or password");
   }
-};
 
-// 🔁 RESET PASSWORD
-export const resetPassword = async (req, res) => {
-  try {
-    const { email, newPassword } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({ success: false, message: "User not found" });
-    }
-
-    // ✅ नया hash बनाओ
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
-
-    res.json({
-      success: true,
-      message: "Password updated successfully",
-    });
-  } catch (err) {
-    res.json({ success: false, message: err.message });
+  if (!admin.isActive) {
+    throw new ApiError(403, "Admin account is inactive");
   }
-};
 
-// 👤 CURRENT USER
-export const me = async (req, res) => {
-  res.json({ success: true, user: req.user });
-};
+  admin.lastLoginAt = new Date();
+  await admin.save();
 
-// 🚪 LOGOUT
-export const logout = async (req, res) => {
-  res.json({ success: true, message: "Logged out" });
-};
+  const token = signToken(admin);
+  res.cookie("token", token, cookieOptions()).json({
+    success: true,
+    token,
+    admin: adminResponse(admin)
+  });
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  res.clearCookie("token", cookieOptions()).json({ success: true });
+});
+
+export const me = asyncHandler(async (req, res) => {
+  res.json({ success: true, admin: adminResponse(req.admin) });
+});

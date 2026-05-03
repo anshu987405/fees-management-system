@@ -6,7 +6,8 @@ import { Admin } from "./models/Admin.js";
 async function resetAdmin() {
   await connectDB();
 
-  const email = "admin@feespro.local";
+  const email = process.env.ADMIN_EMAIL || "admin@feespro.com";
+  const password = process.env.ADMIN_PASSWORD || "anshu@#8923";
   let admin = await Admin.findOne({ email }).select("+password");
 
   if (!admin) {
@@ -14,18 +15,18 @@ async function resetAdmin() {
       name: "System Admin",
       email,
       role: "owner",
-      password: "Admin@12345",
+      password,
       isActive: true
     });
   } else {
-    admin.password = "Admin@12345";
+    admin.password = password;
     admin.isActive = true;
   }
 
   await admin.save();
   console.log("Login reset complete:");
-  console.log("Email: admin@feespro.local");
-  console.log("Password: Admin@12345");
+  console.log(`Email: ${email}`);
+  console.log(`Password: ${password}`);
 
   await mongoose.disconnect();
 }

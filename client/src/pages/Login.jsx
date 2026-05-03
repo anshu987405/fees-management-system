@@ -29,7 +29,7 @@ export default function Login() {
       // ✅ FIX 2
       navigate("/");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Login failed");
+      toast.error(error.response?.data?.message || error.message || "Login failed");
     } finally {
       setLoading(false);
     }

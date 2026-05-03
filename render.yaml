@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: fees-management-system
+    env: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: DEFAULT_UPI_ID
+        value: name@upi
+      - key: UPLOAD_DIR
+        value: uploads
+      - key: ADMIN_EMAIL
+        value: admin@feespro.com
+      - key: ADMIN_PASSWORD
+        value: "anshu@#8923"
+      - key: ADMIN_NAME
+        value: System Admin

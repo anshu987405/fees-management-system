@@ -11,6 +11,7 @@ const paymentSchema = new mongoose.Schema(
     receiptSharedAt: Date,
     notes: String,
     screenshotUrl: String,
+    screenshotDataUrl: String,
     status: { type: String, enum: ["Paid", "Pending", "Verification Pending", "Rejected"], default: "Paid" },
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
     verifiedAt: Date,

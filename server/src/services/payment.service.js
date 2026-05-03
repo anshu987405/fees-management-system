@@ -40,7 +40,7 @@ export async function recalculateStudentPayments(studentId) {
   return student;
 }
 
-export async function createPayment({ studentId, payload, adminId, screenshotUrl }) {
+export async function createPayment({ studentId, payload, adminId, screenshotUrl, screenshotDataUrl }) {
   const student = await Student.findById(studentId);
   if (!student) throw new ApiError(404, "Student not found");
 
@@ -52,6 +52,7 @@ export async function createPayment({ studentId, payload, adminId, screenshotUrl
     paymentDate: payload.paymentDate || new Date(),
     notes: payload.notes,
     screenshotUrl,
+    screenshotDataUrl,
     status,
     receiptNumber: await generateReceiptNumber(),
     receiptShareToken: generateReceiptShareToken(),

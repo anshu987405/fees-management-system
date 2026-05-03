@@ -10,6 +10,8 @@ import morgan from "morgan";
 import { connectDB } from "./config/db.js";
 import apiRoutes from "./routes/index.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
+import { Admin } from "./models/Admin.js";
+import { Setting } from "./models/Setting.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -27,7 +29,10 @@ const clientDist = clientDistCandidates.find((candidate) =>
 );
 
 // Allowed origins
-const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173").split(",");
+const allowedOrigins = [
+  ...(process.env.CLIENT_URL || "http://localhost:5173").split(","),
+  ...(process.env.PUBLIC_APP_URL ? [process.env.PUBLIC_APP_URL] : [])
+].map((origin) => origin.trim()).filter(Boolean);
 
 function corsOrigin(origin, callback) {
   if (!origin) return callback(null, true);
@@ -42,8 +47,9 @@ function corsOrigin(origin, callback) {
       host === "::1";
 
     const isPrivateLan = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host);
+    const isRender = host.endsWith(".onrender.com");
 
-    if (allowedOrigins.includes(origin) || isLocal || isPrivateLan) {
+    if (allowedOrigins.includes(origin) || isLocal || isPrivateLan || isRender) {
       return callback(null, true);
     }
   } catch {
@@ -108,7 +114,38 @@ app.use(errorHandler);
 /* ============================
    START SERVER
 ============================ */
+async function ensureDefaultData() {
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@feespro.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "anshu@#8923";
+
+  const admin = await Admin.findOne({ email: adminEmail });
+  if (!admin) {
+    await Admin.create({
+      name: process.env.ADMIN_NAME || "System Admin",
+      email: adminEmail,
+      password: adminPassword,
+      role: "owner",
+      isActive: true
+    });
+    console.log(`Default admin created: ${adminEmail}`);
+  }
+
+  const settings = await Setting.findOne();
+  if (!settings) {
+    await Setting.create({
+      instituteName: "FeesPro Academy",
+      institutePhone: "",
+      instituteEmail: adminEmail,
+      address: "",
+      upiId: process.env.DEFAULT_UPI_ID || "name@upi",
+      publicAppUrl: process.env.PUBLIC_APP_URL || ""
+    });
+    console.log("Default settings created");
+  }
+}
+
 connectDB()
+  .then(ensureDefaultData)
   .then(() => {
     app.listen(port, () => {
       console.log(`API running on http://localhost:${port}/api`);

@@ -1,4 +1,5 @@
 import { Payment } from "../models/Payment.js";
+import fs from "fs";
 import { Student } from "../models/Student.js";
 import { Setting } from "../models/Setting.js";
 import { ApiError } from "../utils/apiError.js";
@@ -7,6 +8,12 @@ import { getPagination } from "../utils/pagination.js";
 import { createPayment, generateReceiptShareToken, recalculateStudentPayments } from "../services/payment.service.js";
 import { receiptHtml, receiptText } from "../services/receipt.service.js";
 import { buildUpiQrDataUrl, buildUpiUri } from "../utils/upi.js";
+
+function fileToDataUrl(file) {
+  if (!file) return undefined;
+  const bytes = fs.readFileSync(file.path);
+  return `data:${file.mimetype};base64,${bytes.toString("base64")}`;
+}
 
 export const listPayments = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
@@ -27,7 +34,8 @@ export const recordPayment = asyncHandler(async (req, res) => {
     studentId: req.body.studentId,
     payload: req.body,
     adminId: req.admin._id,
-    screenshotUrl: req.file ? `/uploads/${req.file.filename}` : undefined
+    screenshotUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
+    screenshotDataUrl: fileToDataUrl(req.file)
   });
 
   res.status(201).json({ success: true, data: payment });
@@ -108,7 +116,8 @@ export const publicPaymentSubmit = asyncHandler(async (req, res) => {
       verificationPending: true
     },
     adminId: undefined,
-    screenshotUrl: `/uploads/${req.file.filename}`
+    screenshotUrl: `/uploads/${req.file.filename}`,
+    screenshotDataUrl: fileToDataUrl(req.file)
   });
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");

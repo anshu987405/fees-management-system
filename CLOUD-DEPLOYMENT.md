@@ -29,15 +29,24 @@ COOKIE_SECRET=use-another-long-random-secret
 CLIENT_URL=https://fees.yourinstitute.com
 PUBLIC_APP_URL=https://fees.yourinstitute.com
 DEFAULT_UPI_ID=yourupi@upi
+ADMIN_EMAIL=admin@feespro.com
+ADMIN_PASSWORD=change-this-password
+ADMIN_NAME=System Admin
 UPLOAD_DIR=uploads
 ```
 
 ## Build And Start
 
 ```bash
-npm run install:all
-npm run build
+npm run render-build
 npm start
+```
+
+For Render dashboard:
+
+```text
+Build Command: npm run render-build
+Start Command: npm start
 ```
 
 The Express server will serve:
