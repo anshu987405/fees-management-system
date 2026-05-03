@@ -7,18 +7,27 @@ import { useAuth } from "../store/auth";
 export default function Login() {
   const { admin, login } = useAuth();
   const navigate = useNavigate();
-  const [values, setValues] = useState({ email: "admin@feespro.local", password: "Admin@12345" });
+
+  const [values, setValues] = useState({
+    email: "admin@feespro.com",
+    password: "anshu@#8923",
+  });
+
   const [loading, setLoading] = useState(false);
 
-  if (admin) return <Navigate to="/dashboard" replace />;
+  // ✅ FIX 1
+  if (admin) return <Navigate to="/" replace />;
 
   async function submit(event) {
     event.preventDefault();
     setLoading(true);
+
     try {
       await login(values);
       toast.success("Welcome back");
-      navigate("/dashboard");
+
+      // ✅ FIX 2
+      navigate("/");
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
@@ -33,20 +42,33 @@ export default function Login() {
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-brand-600 text-white shadow-soft">
             <CreditCard size={26} />
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight">FeesPro Admin</h1>
-          <p className="mt-2 text-sm text-slate-500">Secure finance cockpit for student fee operations.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            FeesPro Admin
+          </h1>
         </div>
+
         <form onSubmit={submit} className="panel space-y-4 p-6">
-          <label className="text-sm font-semibold text-slate-600">
-            Email
-            <input className="input mt-1" type="email" value={values.email} onChange={(e) => setValues({ ...values, email: e.target.value })} required />
-          </label>
-          <label className="text-sm font-semibold text-slate-600">
-            Password
-            <input className="input mt-1" type="password" value={values.password} onChange={(e) => setValues({ ...values, password: e.target.value })} required />
-          </label>
+          <input
+            className="input"
+            type="email"
+            value={values.email}
+            onChange={(e) =>
+              setValues({ ...values, email: e.target.value })
+            }
+          />
+
+          <input
+            className="input"
+            type="password"
+            value={values.password}
+            onChange={(e) =>
+              setValues({ ...values, password: e.target.value })
+            }
+          />
+
           <button className="btn-primary w-full" disabled={loading}>
-            <LockKeyhole size={17} /> {loading ? "Signing in..." : "Sign In"}
+            <LockKeyhole size={17} />
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>
