@@ -1,14 +1,28 @@
-import { Router } from "express";
-import { login, logout, me, registerAdmin } from "../controllers/auth.controller.js";
-import { protect, authorize } from "../middleware/auth.middleware.js";
-import { validate } from "../middleware/validate.middleware.js";
-import { loginSchema, registerSchema } from "../validators/auth.validator.js";
+import bcrypt from "bcryptjs";
 
-const router = Router();
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-router.post("/login", validate(loginSchema), login);
-router.post("/logout", logout);
-router.get("/me", protect, me);
-router.post("/admins", protect, authorize("owner"), validate(registerSchema), registerAdmin);
+    const user = await User.findOne({ email });
 
-export default router;
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid email or password" });
+    }
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      user,
+    });
+
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+};
